@@ -1,20 +1,92 @@
 import torch
+from torch import nn
 import pandas as pd
 from sklearn.datasets import make_circles
+from sklearn.model_selection import train_test_split
+
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+torch.cuda.manual_seed(42)
+torch.manual_seed(42)
 
 n_samples = 1000
 
 X , y = make_circles(n_samples ,noise = 0.03 , random_state = 42 )
 
-# print(X.shape ,y.shape)
-
-# print(X[:6] , y[:6])
 circles = pd.DataFrame({"x1" : X[:,0] , "x2":X[:,1],"y" :y})
 
-# print(df.head())
+X = torch.from_numpy(X).type(torch.float).to(device)
+y = torch.from_numpy(y).type(torch.float).to(device)
 
-X = torch.from_numpy(X).type(torch.float)
-y = torch.from_numpy(y).type(torch.float)
+Xtrain , Xtest , ytrain , ytest = train_test_split(X,y,test_size= 0.2 ,random_state=42)
+Xtrain , ytrain = Xtrain.to(device) , ytrain.to(device)
+Xtest , ytest = Xtest.to(device) , ytest.to(device)
 
-# print(X.type(),y.type())
 
+
+
+class CirclesModel01(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.layer1 = nn.Linear( 2 , 5)
+        self.layer2 = nn.Linear( 5 , 1)
+
+    def forward(self , x : torch.tensor):
+        return self.layer2(self.layer1(x))
+
+
+
+
+model_0 = CirclesModel01().to(device)
+
+# print(next(model_0.parameters()).to(device))
+
+
+# #### another method to create neural network 
+
+# model_0 = nn.Sequential(
+#           nn.Linear(2,5),
+#           nn.Linear(5,1)
+# ).to(device)
+
+# with torch.inference_mode():
+#  pred = model_0(Xtrain)
+# print(pred[:5])
+# print(ytrain[:5])
+
+loss_fn = nn.BCEWithLogitsLoss()
+
+optimizer = torch.optim.SGD(params = model_0.parameters(),lr = 0.1)
+
+
+epochs = 1000
+
+for epoch in range(epochs):
+
+    model_0.train()
+
+    logits = model_0(Xtrain)
+    preds = torch.round(torch.sigmoid(logits))
+    
+    loss = loss_fn(logits , ytrain.unsqueeze(dim =1))
+    print(f"Epoch : {epoch} , loss : {loss}")
+
+    optimizer.zero_grad()
+
+    loss.backward()
+
+    optimizer.step()
+
+
+model_0.eval()
+
+with torch.inference_mode():
+    test_logits = model_0(Xtest)
+
+    test_preds = torch.round(torch.sigmoid(test_logits))
+   
+    test_loss = loss_fn(test_logits ,  ytest.unsqueeze(dim = 1))
+    
+print(f"Test preds : {test_preds[:5]}")
+print(f"Test Ytest : {ytest[:5]}")
+print(f"Test loss : {test_loss}")
