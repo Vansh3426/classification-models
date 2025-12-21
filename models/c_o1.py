@@ -29,10 +29,13 @@ class CirclesModel01(nn.Module):
     def __init__(self):
         super().__init__()
         self.layer1 = nn.Linear( 2 , 5)
-        self.layer2 = nn.Linear( 5 , 1)
+        self.layer2 = nn.Linear( 5 , 10)
+        self.layer3 = nn.Linear( 10 , 5)
+        self.layer4= nn.Linear( 5 , 1)
+        self.relu =nn.ReLU()
 
     def forward(self , x : torch.tensor):
-        return self.layer2(self.layer1(x))
+        return self.layer4(self.relu(self.layer3(self.relu(self.layer2(self.relu(self.layer1(x)))))))
 
 
 
@@ -59,7 +62,7 @@ loss_fn = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.SGD(params = model_0.parameters(),lr = 0.1)
 
 
-epochs = 1000
+epochs = 10000
 
 for epoch in range(epochs):
 
@@ -69,7 +72,7 @@ for epoch in range(epochs):
     preds = torch.round(torch.sigmoid(logits))
     
     loss = loss_fn(logits , ytrain.unsqueeze(dim =1))
-    print(f"Epoch : {epoch} , loss : {loss}")
+    # print(f"Epoch : {epoch} , loss : {loss}")
 
     optimizer.zero_grad()
 
@@ -77,16 +80,21 @@ for epoch in range(epochs):
 
     optimizer.step()
 
+    if epoch % 1000 == 0:
+        print(f"Epoch : {epoch} , loss : {loss} ")
+
+
 
 model_0.eval()
 
 with torch.inference_mode():
     test_logits = model_0(Xtest)
 
-    test_preds = torch.round(torch.sigmoid(test_logits))
+    test_preds = torch.round(torch.sigmoid(test_logits)).squeeze()
    
     test_loss = loss_fn(test_logits ,  ytest.unsqueeze(dim = 1))
     
 print(f"Test preds : {test_preds[:5]}")
 print(f"Test Ytest : {ytest[:5]}")
 print(f"Test loss : {test_loss}")
+# print(torch.eq(test_preds , ytest))
