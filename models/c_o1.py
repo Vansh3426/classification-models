@@ -3,6 +3,8 @@ from torch import nn
 import pandas as pd
 from sklearn.datasets import make_circles
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -97,4 +99,5 @@ with torch.inference_mode():
 print(f"Test preds : {test_preds[:5]}")
 print(f"Test Ytest : {ytest[:5]}")
 print(f"Test loss : {test_loss}")
+print(f" Test accuracy : {accuracy_score(y_true = ytest.cpu() , y_pred = test_preds.cpu())}")
 # print(torch.eq(test_preds , ytest))
