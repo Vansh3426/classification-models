@@ -33,8 +33,6 @@ class BlobModel01(nn.Module):
         nn.ReLU(),
         nn.Linear( hidden_units, hidden_units),
         nn.ReLU(),
-        nn.Linear( hidden_units , hidden_units),
-        nn.ReLU(),
         nn.Linear( hidden_units , output_features),
         nn.ReLU())
 
